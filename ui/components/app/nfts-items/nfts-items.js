@@ -24,7 +24,7 @@ import {
   getCurrentNetwork,
   getOpenSeaEnabled,
 } from '../../../selectors';
-import { ASSET_ROUTE } from '../../../helpers/constants/routes';
+import { ASSET_ROUTE, SEND_ROUTE } from '../../../helpers/constants/routes';
 import { getAssetImageURL } from '../../../helpers/utils/util';
 import { getNftImageAlt } from '../../../helpers/utils/nfts';
 import { updateNftDropDownState } from '../../../store/actions';
@@ -33,17 +33,28 @@ import { getNftsDropdownState } from '../../../ducks/metamask/metamask';
 import { useI18nContext } from '../../../hooks/useI18nContext';
 import { Icon, IconName } from '../../component-library';
 import { NftItem } from '../../multichain/nft-item';
+import { updateSendAsset } from '../../../ducks/send';
+import { AssetType } from '../../../../shared/constants/transaction';
 
-const width =
-  getEnvironmentType() === ENVIRONMENT_TYPE_POPUP
-    ? BLOCK_SIZES.ONE_THIRD
-    : BLOCK_SIZES.ONE_SIXTH;
+const width = (isModal) => {
+  const env = getEnvironmentType() === ENVIRONMENT_TYPE_POPUP;
+
+  if (isModal) {
+    return BLOCK_SIZES.ONE_THIRD;
+  }
+  if (env === ENVIRONMENT_TYPE_POPUP) {
+    return BLOCK_SIZES.ONE_THIRD;
+  }
+  return BLOCK_SIZES.ONE_SIXTH;
+};
 
 const PREVIOUSLY_OWNED_KEY = 'previouslyOwned';
 
 export default function NftsItems({
   collections = {},
   previouslyOwnedCollection = {},
+  isModal = false,
+  onCloseModal = {},
 }) {
   const dispatch = useDispatch();
   const collectionsKeys = Object.keys(collections);
@@ -139,6 +150,18 @@ export default function NftsItems({
     dispatch(updateNftDropDownState(newState));
   };
 
+  const onSendNft = async (nft) => {
+    await dispatch(
+      updateSendAsset({
+        type: AssetType.NFT,
+        details: nft,
+        skipComputeEstimatedGasLimit: true,
+      }),
+    );
+    history.push(SEND_ROUTE);
+    onCloseModal();
+  };
+
   const renderCollection = ({ nfts, collectionName, collectionImage, key }) => {
     if (!nfts.length) {
       return null;
@@ -198,12 +221,16 @@ export default function NftsItems({
                 : image;
               const nftSrcUrl = imageOriginal ?? image;
               const isIpfsURL = nftSrcUrl?.startsWith('ipfs:');
-              const handleImageClick = () =>
-                history.push(`${ASSET_ROUTE}/${address}/${tokenId}`);
+              const handleImageClick = () => {
+                if (isModal) {
+                  return onSendNft(nft);
+                }
+                return history.push(`${ASSET_ROUTE}/${address}/${tokenId}`);
+              };
               return (
                 <Box
                   data-testid="nft-wrapper"
-                  width={width}
+                  width={width(isModal)}
                   key={`nft-${i}`}
                   className="nfts-items__item-wrapper"
                 >
@@ -305,4 +332,6 @@ NftsItems.propTypes = {
     collectionImage: PropTypes.string,
     collectionName: PropTypes.string,
   }),
+  isModal: PropTypes.bool,
+  onCloseModal: PropTypes.func,
 };

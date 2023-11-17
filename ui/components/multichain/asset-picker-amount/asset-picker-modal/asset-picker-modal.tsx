@@ -3,6 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import classnames from 'classnames';
 import { isEqual } from 'lodash';
+import { Tab, Tabs } from '../../../ui/tabs';
+import NftsItems from '../../../app/nfts-items/nfts-items';
 import {
   Modal,
   ModalContent,
@@ -10,12 +12,22 @@ import {
   ModalHeader,
   TextFieldSearch,
   Box,
+  Text,
+  ButtonLink,
+  ButtonLinkSize,
 } from '../../../component-library';
 import {
   BlockSize,
   Size,
   BorderRadius,
   BackgroundColor,
+  TextColor,
+  TextVariant,
+  TextAlign,
+  Display,
+  JustifyContent,
+  AlignItems,
+  FlexDirection,
 } from '../../../../helpers/constants/design-system';
 import { useI18nContext } from '../../../../hooks/useI18nContext';
 import {
@@ -41,6 +53,8 @@ import { useUserPreferencedCurrency } from '../../../../hooks/useUserPreferenced
 import { useCurrencyDisplay } from '../../../../hooks/useCurrencyDisplay';
 import TokenCell from '../../../app/token-cell';
 import { TokenListItem } from '../../token-list-item';
+import { useNftsCollections } from '../../../../hooks/useNftsCollections';
+import ZENDESK_URLS from '../../../../helpers/constants/zendesk-url';
 
 type AssetPickerModalProps = {
   isOpen: boolean;
@@ -75,6 +89,10 @@ export function AssetPickerModal({
     address: selectedAddress,
     hideZeroBalanceTokens: Boolean(shouldHideZeroBalanceTokens),
   });
+
+  const { collections, previouslyOwnedCollection } = useNftsCollections();
+
+  const hasAnyNfts = Object.keys(collections).length > 0;
 
   const {
     currency: primaryCurrency,
@@ -125,9 +143,34 @@ export function AssetPickerModal({
     isSelected: selectedToken === null,
   });
 
-  const tokensData = tokenList.filter((item) =>
-    item.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
+  tokenList.sort((a, b) => {
+    if (a.type === AssetType.native) {
+      return -1;
+    } else if (b.type === AssetType.native) {
+      return 1;
+    }
+    return 0;
+  });
+
+  const tokensData = tokenList.filter((token) =>
+    token.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  const collectionsKeys = Object.keys(collections);
+
+  const collectionsData = collectionsKeys.reduce((acc: unknown[], key) => {
+    const collection = (collections as any)[key];
+
+    const isMatchingQuery = collection.collectionName
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+
+    if (isMatchingQuery) {
+      acc.push(collection);
+      return acc;
+    }
+    return acc;
+  }, []);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -187,57 +230,141 @@ export function AssetPickerModal({
             }}
             endAccessory={null}
           />
-          {tokensData.map((token) => {
-            return (
-              <Box
-                padding={4}
-                gap={2}
-                key={token.symbol}
-                backgroundColor={
-                  token.isSelected
-                    ? BackgroundColor.primaryMuted
-                    : BackgroundColor.transparent
-                }
-                className={classnames('multichain-asset-picker-list-item', {
-                  'multichain-asset-picker-list-item--selected':
-                    token.isSelected,
-                })}
-                onClick={() => handleSelectToken(token)}
-              >
-                {token.isSelected && (
-                  <Box
-                    className="multichain-asset-picker-list-item__selected-indicator"
-                    borderRadius={BorderRadius.pill}
-                    backgroundColor={BackgroundColor.primaryDefault}
-                  />
-                )}
-                <div key={token.address} className="multichain-token-list">
-                  <div className="multichain-token-list__data">
-                    {token.type === AssetType.native ? (
-                      <TokenListItem
-                        title={nativeCurrency}
-                        primary={
-                          primaryCurrencyProperties.value ??
-                          secondaryCurrencyProperties.value
+          <Box
+            style={{ flexGrow: '1' }}
+            paddingTop={4}
+            className="modal-tab__main-view"
+          >
+            <Tabs defaultActiveTabKey="details" tabsClassName="modal-tab__tabs">
+              {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                <Tab
+                  activeClassName="modal-tab__tab--active"
+                  className="modal-tab__tab"
+                  name={t('tokens')}
+                  tabKey="tokens"
+                >
+                  {tokensData.map((token) => {
+                    return (
+                      <Box
+                        padding={4}
+                        gap={2}
+                        key={token.symbol}
+                        backgroundColor={
+                          token.isSelected
+                            ? BackgroundColor.primaryMuted
+                            : BackgroundColor.transparent
                         }
-                        tokenSymbol={primaryCurrencyProperties.suffix}
-                        secondary={secondaryCurrencyDisplay}
-                        tokenImage={token.image}
+                        className={classnames(
+                          'multichain-asset-picker-list-item',
+                          {
+                            'multichain-asset-picker-list-item--selected':
+                              token.isSelected,
+                          },
+                        )}
+                        onClick={() => handleSelectToken(token)}
+                      >
+                        {token.isSelected && (
+                          <Box
+                            className="multichain-asset-picker-list-item__selected-indicator"
+                            borderRadius={BorderRadius.pill}
+                            backgroundColor={BackgroundColor.primaryDefault}
+                          />
+                        )}
+                        <div
+                          key={token.address}
+                          className="multichain-token-list"
+                        >
+                          <div className="multichain-token-list__data">
+                            {token.type === AssetType.native ? (
+                              <TokenListItem
+                                title={nativeCurrency}
+                                primary={
+                                  primaryCurrencyProperties.value ??
+                                  secondaryCurrencyProperties.value
+                                }
+                                tokenSymbol={primaryCurrencyProperties.suffix}
+                                secondary={secondaryCurrencyDisplay}
+                                tokenImage={token.image}
+                              />
+                            ) : (
+                              <div>
+                                <TokenCell
+                                  key={token.address}
+                                  {...token}
+                                  onClick={() => handleSelectToken(token)}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Box>
+                    );
+                  })}
+                </Tab>
+              }
+
+              {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                <Tab
+                  activeClassName="modal-tab__tab--active"
+                  className="modal-tab__tab"
+                  name={t('nfts')}
+                  tabKey="nfts"
+                >
+                  <Box>
+                    {hasAnyNfts ? (
+                      <NftsItems
+                        collections={collectionsData}
+                        previouslyOwnedCollection={previouslyOwnedCollection}
+                        isModal={true}
+                        onCloseModal={() => onClose()}
                       />
                     ) : (
-                      <div>
-                        <TokenCell
-                          key={token.address}
-                          {...token}
-                          onClick={() => handleSelectToken(token)}
-                        />
-                      </div>
+                      <Box
+                        padding={12}
+                        display={Display.Flex}
+                        flexDirection={FlexDirection.Column}
+                        alignItems={AlignItems.center}
+                        justifyContent={JustifyContent.center}
+                      >
+                        <Box justifyContent={JustifyContent.center}>
+                          <img src="./images/no-nfts.svg" />
+                        </Box>
+                        <Box
+                          marginTop={4}
+                          marginBottom={12}
+                          display={Display.Flex}
+                          justifyContent={JustifyContent.center}
+                          alignItems={AlignItems.center}
+                          flexDirection={FlexDirection.Column}
+                          className="nfts-tab__link"
+                        >
+                          <Text
+                            color={TextColor.textMuted}
+                            variant={TextVariant.headingSm}
+                            textAlign={TextAlign.Center}
+                            as="h4"
+                          >
+                            {t('noNFTs')}
+                          </Text>
+                          <ButtonLink
+                            size={ButtonLinkSize.Sm}
+                            href={ZENDESK_URLS.NFT_TOKENS}
+                            externalLink
+                          >
+                            {t('learnMoreUpperCase')}
+                          </ButtonLink>
+                        </Box>
+                      </Box>
                     )}
-                  </div>
-                </div>
-              </Box>
-            );
-          })}
+                  </Box>
+                </Tab>
+              }
+            </Tabs>
+          </Box>
         </div>
       </ModalContent>
     </Modal>
