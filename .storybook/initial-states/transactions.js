@@ -91,6 +91,8 @@ export const MOCK_TRANSACTION_BY_TYPE = {
       },
       [
         {
+              type: 'cancel',
+    history: [
           op: 'add',
           path: '/r',
           value:
