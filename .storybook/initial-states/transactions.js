@@ -18,7 +18,26 @@ const MOCK_TX_TYPE = {
   TOKEN_METHOD_TRANSFER: 'transfer',
   TOKEN_METHOD_TRANSFER_FROM: 'transferfrom',
 };
-
+const MOCK_TX_TYPE = {
+  CANCEL: 'cancel',
+  CONTRACT_INTERACTION: 'contractInteraction',
+  DEPLOY_CONTRACT: 'contractDeployment',
+  ETH_DECRYPT: 'eth_decrypt',
+  ETH_GET_ENCRYPTION_PUBLIC_KEY: 'eth_getEncryptionPublicKey',
+  INCOMING: 'incoming',
+  PERSONAL_SIGN: 'personal_sign',
+  RETRY: 'retry',
+  SIGN: 'eth_sign',
+  SIGN_TYPED_DATA: 'eth_signTypedData',
+  SIMPLE_SEND: 'simpleSend',
+  SMART: 'smart',
+  SWAP: 'swap',
+  SWAP_APPROVAL: 'swapApproval',
+  TOKEN_METHOD_APPROVE: 'approve',
+  TOKEN_METHOD_SAFE_TRANSFER_FROM: 'safetransferfrom',
+  TOKEN_METHOD_TRANSFER: 'transfer',
+  TOKEN_METHOD_TRANSFER_FROM: 'transferfrom',
+};
 export const MOCK_TRANSACTION_BY_TYPE = {
   [MOCK_TX_TYPE.CANCEL]: {
     id: 643368596521636,
