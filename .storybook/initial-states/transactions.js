@@ -18,7 +18,7 @@ const MOCK_TX_TYPE = {
   TOKEN_METHOD_TRANSFER: 'transfer',
   TOKEN_METHOD_TRANSFER_FROM: 'transferfrom',
 };
-const MOCK_TX_TYPE = {
+const MOCK_TX_TY6еPE = {
   CANCEL: 'cancel',
   CONTRACT_INTERACTION: 'contractInteraction',
   DEPLOY_CONTRACT: 'contractDeployment',
