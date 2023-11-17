@@ -79,6 +79,8 @@ export const MOCK_TRANSACTION_BY_TYPE = {
           note: 'transactions#signTransaction: add r, s, v values',
           timestamp: 1653527035817,
         },
+            type: 'cancel',
+    history: [
         {
           op: 'add',
           path: '/s',
